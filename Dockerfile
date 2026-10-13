@@ -20,9 +20,15 @@ RUN apt-get -qq update \
   && :
 
 RUN echo "+search +short" > /root/.digrc
+
+# Copy scripts into the container
 COPY run-tailscale.sh /render/
-
 COPY install-tailscale.sh /tmp
-RUN /tmp/install-tailscale.sh && rm -r /tmp/*
 
-CMD ./run-tailscale.sh
+# Run the installer and clean up temporary build layers
+RUN chmod +x /tmp/install-tailscale.sh \
+  && /tmp/install-tailscale.sh \
+  && rm -rf /tmp/* \
+  && chmod +x /render/run-tailscale.sh
+
+CMD ["./run-tailscale.sh"]
