@@ -1,14 +1,17 @@
-##!/usr/bin/env bash
+#!/usr/bin/env bash
 
-# 1. CHANGED: Switched to userspace-route so it can route exit node traffic
-/render/tailscaled --tun=userspace-route --socks5-server=localhost:1055 &
+# 1. FIXED: Changed back to userspace-networking so Render won't crash on /dev/net/tun.
+# Added --snat-subnet-routes=false to cleanly pass exit-node network states over the proxy layer.
+/render/tailscaled \
+  --tun=userspace-networking \
+  --socks5-server=localhost:1055 \
+  --snat-subnet-routes=false &
 PID=$!
 
-# Allow the daemon a moment to initialize
+# Allow the daemon a moment to initialize safely
 sleep 2
 
-# 2. CHANGED: Added --advertise-exit-node. 
-# Also removed the 'until' loop so it cleanly prints a login link once if TAILSCALE_AUTHKEY is empty.
+# 2. Authenticate the node and advertise the exit node capabilities
 ADVERTISE_ROUTES=${ADVERTISE_ROUTES:-10.0.0.0/8}
 /render/tailscale up \
   --authkey="${TAILSCALE_AUTHKEY}" \
